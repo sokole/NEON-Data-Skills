@@ -16,10 +16,10 @@ urlTitle: classification-training-data
 
 ---
 
-<div id="ds-objectives" markdown="1">
-
 This notebook demonstrates how to generate a training dataset consisting of tree species, family, and location from the NEON Terrestrial Observation System (TOS) Vegetation Structure data product <a href="https://data.neonscience.org/data-products/DP1.10098.001" target=_blank>DP1.10098.001</a>. We will use data from the <a href="https://www.neonscience.org/field-sites/serc" target=_blank>Smithsonian Environmental Research Center (SERC)</a> site in Maryland. In a subsequent tutorial titled <a href="https://www.neonscience.org/resources/learning-hub/tutorials/refl-classification-pyxarray" target=_blank>Tree Classification with NEON Airborne Imaging Spectrometer Data using Python xarray</a>, we will use this training dataset to train a random forest machine learning model that predicts tree families from the hyperspectral signatures obtained from the airborne remote sensing data. These two tutorials outline a relatively simple modeling example, and represent a starting point for conducting machine learning analyses using NEON data!
 
+<div id="ds-objectives" markdown="1">
+ 
 ### Set Up Python Environment
 
 To run this notebook, you will need the following Python packages, which can be installed using `!pip install` or `!conda install` from within the notebook. Note that to use the `neonutilities` package, you will need Python version 3.9 or higher.
@@ -69,6 +69,7 @@ import numpy as np
 import pandas as pd
 import requests
 import seaborn as sns
+import time
 ```
 
 Set up your NEON token. See the setup instructions at the beginning of the tutorial on how to set up a NEON user account and create a token, if you have not already done so.
@@ -81,9 +82,9 @@ my_token=""
 
 We can load the vegetation structure data using the `load_by_product` function in the `neonutilities` package (imported as `nu`). Inputs to the function can be shown by typing `help(load_by_product)`.
   
-Refer to h  <a href="https://www.neonscience.org/sites/default/files/cheat-sheet-neonUtilities.pdf" target=_blank>R neonUtilities cheat sheet</a>  or th <a href="https://neon-utilities-python.readthedocs.io/en/latest/" target=_blank>Python neonutilities documentation</a>e for more details and the completelistx of possible function inputs. The cheat sheet is focused on the R package, but nearly all the inputs are the sae in Python neonutilities.e
+Refer to the  <a href="https://www.neonscience.org/sites/default/files/cheat-sheet-neonUtilities.pdf" target=_blank>R neonUtilities cheat sheet</a>  or the <a href="https://neon-utilities-python.readthedocs.io/en/latest/" target=_blank>Python neonutilities documentation</a> for more details and the complete list of possible function inputs. The cheat sheet is focused on the R package, but nearly all the inputs are the same in Python neonutilitiese
 
-Note that in this example, we will pull in all the woody vegetation data (collected over all years), but if you are trying to modeldata collected  in a single year, you can select just that year by specifying the `startdate` and `enddate`, or later filtering out the vegetation data by the` eventI`D We have set `check_size=False` since the data are not very large, but to check the size of what the data you are downloading first, you could omit this input, or set it to `True`.
+Note that in this example, we will pull in all the woody vegetation data (collected over all years), but if you are trying to model data collected in a single year, you can select just that year by specifying the `startdate` and `enddate`, or later filtering out the vegetation data by the `eventID`. We have set `check_size=False` since the data are not very large, but to check the size of what the data you are downloading first, you could omit this input, or set it to `True`.
 
 
 ```python
@@ -96,12 +97,12 @@ veg_dict = nu.load_by_product(dpid="DP1.10098.001",
 ```
 
     Finding available files
-    100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [00:45<00:00,  1.99s/it]
+    100%|██████████████████████████████████████████████████████████████████████████████████| 23/23 [00:13<00:00,  1.68it/s]
     Downloading 23 NEON DP1.10098.001 files totaling approximately 40.0 MB.
     Downloading files
-    100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 23/23 [00:24<00:00,  1.08s/it]
+    100%|██████████████████████████████████████████████████████████████████████████████████| 23/23 [00:14<00:00,  1.55it/s]
     Stacking data files
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:01<00:00,  2.36it/s]
+    100%|████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:01<00:00,  3.06it/s]
     
 
 Get a list of the points
@@ -123,12 +124,9 @@ veg_map_all.eventID.unique()
 ```
 
 
-
-
     array(['vst_SERC_2015', 'vst_SERC_2016', 'vst_SERC_2017', 'vst_SERC_2018',
            'vst_SERC_2019', 'vst_SERC_2020', 'vst_SERC_2021', 'vst_SERC_2022',
            'vst_SERC_2023'], dtype=object)
-
 
 
 Get the number of records for each `eventID`:
@@ -159,7 +157,7 @@ It looks like most of the trees were mapped in 2015 and 2016, which was when the
 
 ## 2. Determine the geographic location of the surveyed vegetation
 
-Loop through all of the points in `veg_points` to determine the easting and northing from the <a href="https://data.neonscience.org/data-api/endpoints/locations/" target=_blank>NEON Locations API</a>.
+Loop through all of the points in `veg_points` to determine the easting and northing from the <a href="https://data.neonscience.org/data-api/endpoints/locations/" target=_blank>NEON Locations API</a>. In some rare cases, mostly in older data, there may be points that are not found in the location database. The `if/else` block below handles the case where location data are missing.
 
 
 ```python
@@ -167,18 +165,31 @@ easting = []
 northing = []
 coord_uncertainty = []
 elev_uncertainty = []
+drop_points = []
 for i in veg_points:
+    time.sleep(1) # helps avoid hitting the API rate limit
     vres = requests.get("https://data.neonscience.org/api/v0/locations/"+i)
     vres_json = vres.json()
-    easting.append(vres_json["data"]["locationUtmEasting"])
-    northing.append(vres_json["data"]["locationUtmNorthing"])
-    props = pd.DataFrame.from_dict(vres_json["data"]["locationProperties"])
-    cu = props.loc[props["locationPropertyName"]=="Value for Coordinate uncertainty"]["locationPropertyValue"]
-    coord_uncertainty.append(cu[cu.index[0]])
-    eu = props.loc[props["locationPropertyName"]=="Value for Elevation uncertainty"]["locationPropertyValue"]
-    elev_uncertainty.append(eu[eu.index[0]])
+    # discard points that aren’t found in the location database
+    if vres_json["data"] is not None:
+        easting.append(vres_json["data"]["locationUtmEasting"])
+        northing.append(vres_json["data"]["locationUtmNorthing"])
+        props = pd.DataFrame.from_dict(vres_json["data"]["locationProperties"])
+        cu = props.loc[props["locationPropertyName"] == "Value for Coordinate uncertainty"]["locationPropertyValue"]
+        coord_uncertainty.append(cu[cu.index[0]])
+        eu = props.loc[props["locationPropertyName"] == "Value for Elevation uncertainty"]["locationPropertyValue"]
+        elev_uncertainty.append(eu[eu.index[0]])
+    else:
+        drop_points.append(i)
 
-pt_dict = dict(points=veg_points, 
+veg_points_clean = [v for v in veg_points if v not in drop_points]
+```
+
+Now we can create a dataframe containing the vegetation data.
+
+
+```python
+pt_dict = dict(points=veg_points_clean, 
                easting=easting,
                northing=northing,
                coordinateUncertainty=coord_uncertainty,
@@ -334,6 +345,8 @@ len(veg_map)
 
     1211
 
+
+
 ## 3. Filter to trees within an AOP tile extent
 
 Now create a new dataframe containing only the veg data that are within a single AOP tile (which are 1 km x 1 km in size). For this, you will need to know the bounds (minimum and maximum UTM easting and northing) of the area you are sampling. For this exercise, we will choose the AOP data with SW (lower left) UTM coordinates of 364000, 4305000. This tile encompasses the NEON tower at the SERC site.
@@ -378,7 +391,7 @@ Let's keep only a subset of the columns that we are interested in, and look at t
 
 
 ```python
-veg_tower_tile_short = veg_tower_tile[['date','individualID','scientificName','taxonID','family','plotID','pointID','adjEasting','adjNorthing']]
+veg_tower_tile_short = veg_tower_tile[['date','individualID','scientificName','taxonID','family','adjEasting','adjNorthing']]
 veg_tower_tile_short.reset_index(drop=True, inplace=True)
 veg_tower_tile_short
 ```
@@ -409,8 +422,6 @@ veg_tower_tile_short
       <th>scientificName</th>
       <th>taxonID</th>
       <th>family</th>
-      <th>plotID</th>
-      <th>pointID</th>
       <th>adjEasting</th>
       <th>adjNorthing</th>
     </tr>
@@ -423,8 +434,6 @@ veg_tower_tile_short
       <td>Liquidambar styraciflua L.</td>
       <td>LIST2</td>
       <td>Hamamelidaceae</td>
-      <td>SERC_052</td>
-      <td>59</td>
       <td>364578.230724</td>
       <td>4.305896e+06</td>
     </tr>
@@ -435,8 +444,6 @@ veg_tower_tile_short
       <td>Acer rubrum L.</td>
       <td>ACRU</td>
       <td>Aceraceae</td>
-      <td>SERC_052</td>
-      <td>61</td>
       <td>364590.549216</td>
       <td>4.305899e+06</td>
     </tr>
@@ -447,8 +454,6 @@ veg_tower_tile_short
       <td>Fagus grandifolia Ehrh.</td>
       <td>FAGR</td>
       <td>Fagaceae</td>
-      <td>SERC_052</td>
-      <td>43</td>
       <td>364586.368495</td>
       <td>4.305883e+06</td>
     </tr>
@@ -459,8 +464,6 @@ veg_tower_tile_short
       <td>Acer rubrum L.</td>
       <td>ACRU</td>
       <td>Aceraceae</td>
-      <td>SERC_052</td>
-      <td>59</td>
       <td>364578.883395</td>
       <td>4.305888e+06</td>
     </tr>
@@ -471,15 +474,11 @@ veg_tower_tile_short
       <td>Acer rubrum L.</td>
       <td>ACRU</td>
       <td>Aceraceae</td>
-      <td>SERC_052</td>
-      <td>61</td>
       <td>364590.276108</td>
       <td>4.305897e+06</td>
     </tr>
     <tr>
       <th>...</th>
-      <td>...</td>
-      <td>...</td>
       <td>...</td>
       <td>...</td>
       <td>...</td>
@@ -495,8 +494,6 @@ veg_tower_tile_short
       <td>Carya tomentosa (Lam.) Nutt.</td>
       <td>CATO6</td>
       <td>Juglandaceae</td>
-      <td>SERC_056</td>
-      <td>43</td>
       <td>364708.570635</td>
       <td>4.305389e+06</td>
     </tr>
@@ -507,8 +504,6 @@ veg_tower_tile_short
       <td>Pinus sp.</td>
       <td>PINUS</td>
       <td>Pinaceae</td>
-      <td>SERC_056</td>
-      <td>59</td>
       <td>364701.345113</td>
       <td>4.305407e+06</td>
     </tr>
@@ -519,8 +514,6 @@ veg_tower_tile_short
       <td>Pinus sp.</td>
       <td>PINUS</td>
       <td>Pinaceae</td>
-      <td>SERC_057</td>
-      <td>41</td>
       <td>364438.131683</td>
       <td>4.305409e+06</td>
     </tr>
@@ -531,8 +524,6 @@ veg_tower_tile_short
       <td>Quercus alba L.</td>
       <td>QUAL</td>
       <td>Fagaceae</td>
-      <td>SERC_057</td>
-      <td>43</td>
       <td>364470.101669</td>
       <td>4.305412e+06</td>
     </tr>
@@ -543,14 +534,12 @@ veg_tower_tile_short
       <td>Fagus grandifolia Ehrh.</td>
       <td>FAGR</td>
       <td>Fagaceae</td>
-      <td>SERC_057</td>
-      <td>41</td>
       <td>364455.772024</td>
       <td>4.305415e+06</td>
     </tr>
   </tbody>
 </table>
-<p>211 rows × 9 columns</p>
+<p>211 rows × 7 columns</p>
 </div>
 
 
@@ -769,7 +758,7 @@ Nonetheless, we have a fairly decent training dataset to work with. We can save 
 
 
 ```python
-veg_tower_tile_short.to_csv(r'.\data\serc_training_data.csv',index=False)
+veg_tower_tile_short.to_csv(r'./data/serc_training_data.csv',index=False)
 ```
 
 ## 5. Plot tree families in map view
@@ -810,7 +799,7 @@ plt.show()
 
 
     
-![png](https://raw.githubusercontent.com/NEONScience/NEON-Data-Skills/main/tutorials/Python/AOP/Hyperspectral/classification/refl-h5-xarray/make_classification_training_data_files/make_classification_training_data_35_0.png)
+![png](https://raw.githubusercontent.com/NEONScience/NEON-Data-Skills/main/tutorials/Python/AOP/Hyperspectral/classification/refl-h5-xarray/make_classification_training_data_files/make_classification_training_data_38_0.png)
     
 
 

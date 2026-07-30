@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="generator" content="litedown 0.7">
+<title>Download and work with NEON Aquatic Instrument Data</title>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+body, .abstract, code, .footnotes, footer, #refs, .caption { font-size: .9em; }
+li li { font-size: .95em; }
+ul:has(li > input[type="checkbox"]) { list-style: none; padding-left: 1em; }
+*, :before, :after { box-sizing: border-box; }
+a { color: steelblue; }
+pre, img { max-width: 100%; }
+pre { white-space: pre-wrap; word-break: break-word; }
+pre code { display: block; padding: 1em; overflow-x: auto; }
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre, th) > code, code[class], div > .caption { background: #f8f8f8; }
+pre > code:is(:not([class]), .language-plain, .language-none, .plain), .box, .figure, .table { background: inherit; border: 1px solid #eee; }
+pre > code {
+  &.message { border-color: #9eeaf9; }
+  &.warning { background: #fff3cd; border-color: #fff3cd; }
+  &.error { background: #f8d7da; border-color: #f8d7da; }
+}
+.fenced-chunk { border-left: 1px solid #666; }
+.code-fence {
+  opacity: .4;
+  border: 1px dashed #666;
+  border-left: 2px solid;
+  &:hover { opacity: inherit; }
+}
+.box, .figure, .table, table { margin: 1em auto; }
+div > .caption { padding: 1px 1em; }
+.figure { p:has(img, svg), pre:has(svg) { text-align: center; } }
+.flex-col { display: flex; justify-content: space-between; }
+table {
+  &:only-child:not(.table > *) { margin: auto; }
+  th, td { padding: 5px; font-variant-numeric: tabular-nums; }
+  thead, tfoot, tr:nth-child(even) { background: whitesmoke; }
+  thead th { border-bottom: 1px solid #ddd; }
+  &:not(.datatable-table) {
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;
+  }
+}
+blockquote {
+  color: #666;
+  margin: 0;
+  padding: 1px 1em;
+  border-left: .5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC {
+  a { text-decoration: none; }
+  ul { list-style: none; padding-left: 1em; }
+  & > ul { padding: 0; }
+  ul ul { border-left: 1px solid lightsteelblue; }
+}
+.body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.main-number::after { content: "."; }
+span[class^="ref-number-"] { font-weight: bold; }
+.ref-number-fig::after, .ref-number-tab::after { content: ":"; }
+.cross-ref-chp::before { content: "Chapter "; }
+.cross-ref-sec::before { content: "Section "; }
+.cross-ref-fig::before, .ref-number-fig::before { content: "Figure "; }
+.cross-ref-tab::before, .ref-number-tab::before { content: "Table "; }
+.cross-ref-eqn::before, .MathJax_ref:has(mjx-mtext > mjx-c + mjx-c)::before { content: "Equation "; }
+.abstract, #refs {
+  &::before { display: block; margin: 1em auto; font-weight: bold; }
+}
+.abstract::before { content: "Abstract"; text-align: center; }
+#refs::before { content: "Bibliography"; font-size: 1.5em; }
+.ref-paren-open::before { content: "("; }
+.ref-paren-close::after { content: ")"; }
+.ref-semicolon::after { content: "; "; }
+.ref-and::after { content: " and "; }
+.ref-et-al::after { content: " et al."; font-style: italic; }
+.footnote-ref a {
+  &::before { content: "["; }
+  &::after { content: "]"; }
+}
+section.footnotes {
+  margin-top: 2em;
+  &::before { content: ""; display: block; max-width: 20em; }
+}
+.fade {
+  background: repeating-linear-gradient(135deg, white, white 30px, #ddd 32px, #ddd 32px);
+  opacity: 0.6;
+}
+
+@media print {
+  body { max-width: 100%; }
+  tr, img { break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  body:not(.pagesjs) pre:has(.line-numbers):not(:hover) { white-space: pre; }
+}
+</style>
+</head>
+<body>
+<div class="frontmatter">
+<div class="title"><h1>Download and work with NEON Aquatic Instrument Data</h1></div>
+</div>
+<div class="body">
+<p>This tutorial covers downloading NEON Aquatic Instrument System (AIS) data
+using the neonUtilities R package, as well as basic instruction in exploring
+and working with the downloaded data. You will learn how to navigate data
+documentation, separate data using the horizontalPosition variable, and
+interpret quality flags.</p>
+<div id="ds-objectives" markdown="1">
+<h2 id="sec:objectives">Objectives</h2>
+<p>After completing this activity, you will be able to:</p>
+<ul>
+<li>Download NEON AIS data using the <code>neonUtilities</code> package.</li>
+<li>Understand how data sets are formatted and load them into R for analysis.</li>
+<li>Separate data collected at different sensor locations using the horizontalPosition variable.</li>
+<li>Understand and filter data using quality flags.</li>
+</ul>
+<h2 id="sec:things-you-ll-need-to-complete-this-tutorial">Things You’ll Need To Complete This Tutorial</h2>
+<ul>
+<li>To complete this tutorial you will need R (version &gt;4.1) and,
+preferably, RStudio loaded on your computer.</li>
+<li>Create a <a href="https://www.neonscience.org/about/user-accounts" target="_blank">NEON user account</a></li>
+<li>Generate an <a href="https://www.neonscience.org/resources/learning-hub/tutorials/api-token-setup" target="_blank">API token</a> for downloading data</li>
+</ul>
+<h3 id="sec:install-r-packages">Install R Packages</h3>
+<ul>
+<li><strong>neonUtilities</strong>: Basic functions for accessing and working with NEON data</li>
+<li><strong>ggplot2</strong>: Plotting functions</li>
+</ul>
+<p>These packages are on CRAN and can be installed by
+<code>install.packages()</code>.</p>
+<h3 id="sec:additional-resources">Additional Resources</h3>
+<ul>
+<li><a href="https://github.com/NEONScience/NEON-Utilities/neonUtilities" target="_blank">GitHub repository for neonUtilities</a></li>
+</ul>
+</div>
+<h2 id="sec:download-files-and-load-directly-to-r-loadbyproduct">Download Files and Load Directly to R: loadByProduct()</h2>
+<p>The most popular function in <code>neonUtilities</code> is <code>loadByProduct()</code>.
+This function downloads data from the NEON API, merges the site-by-month
+files, and loads the resulting data tables into the R environment,
+assigning each data type to the appropriate R class. This is a popular
+choice because it ensures you’re always working with the most up-to-date data,
+and it ends with ready-to-use tables in R. However, if you use it in
+a workflow you run repeatedly, keep in mind it will re-download the
+data every time.</p>
+<p>Before we get the NEON data, we need to install (if not already done) and load
+the <code>neonUtilities</code> R package, as well as other packages we will use in the
+analysis. As of June 2026, NEON requires an API token for data downloads, to reduce bot scraping and improve user support. Tokens can be generated in NEON data portal user accounts - log in to your account or create one, and go to the API Tokens section. For best practices in storing and using tokens, follow the instructions <a href="https://www.neonscience.org/resources/learning-hub/tutorials/api-token-setup" target="_blank">here</a>.</p>
+<pre><code># Install neonUtilities package if you have not yet.
+
+install.packages(&quot;neonUtilities&quot;)
+
+install.packages(&quot;ggplot2&quot;)
+
+install.packages(&quot;dplyr&quot;)
+
+
+# Load required packages and token
+
+library(neonUtilities)
+
+library(ggplot2)
+
+library(dplyr)
+
+token &lt;- Sys.getenv(&quot;NEON_TOKEN&quot;)
+</code></pre>
+<p>The inputs to <code>loadByProduct()</code> control which data to download and how
+to manage the processing. The following are frequently used inputs:</p>
+<ul>
+<li><code>dpID</code>: the NEON data product ID, e.g. “DP1.20288.001”</li>
+<li><code>site</code>: 4-letter NEON site code, e.g. “ARIK”, or vector of of multiple sites,
+e.g. “c(“MART”,“ARIK”,“BARC”)”. Defaults to “all”, meaning all sites.</li>
+<li><code>startdate</code> and <code>enddate</code>: start and end dates for period to be downloaded
+in the form YYYY-MM, e.g. “2017-06”. Defaults to NA, meaning all available data.</li>
+<li><code>package</code>: specifies either “basic” or “expanded” data package. Expanded data
+packages generally include additional information about data quality, such as
+individual quality flag test results. Not every NEON data product has an
+expanded package; if the expanded package is requested but there isn’t one,
+the basic package will be downloaded.</li>
+<li><code>release</code>: release version to be downloaded, e.g. “RELEASE-2023”.  To
+download the most recent release as well as provisional data (not yet QAQC’ed
+and included in a versioned release) use “current”.</li>
+<li><code>savepath</code>: the file path you want to download to; defaults to the
+working directory.</li>
+<li><code>check.size</code>: T or F; should the function pause before downloading
+data and warn you about the size of your download? Defaults to T; if
+you are using this function within a script or batch process you
+will want to set this to F.</li>
+<li><code>token</code>: your NEON API token</li>
+</ul>
+<p>Learn more about NEON API tokens in the <a href="https://www.neonscience.org/resources/learning-hub/tutorials/neon-api-tokens-tutorial" target="_blank"><strong>Using an API Token when Accessing NEON Data with neonUtilities</strong> tutorial</a>.</p>
+<p>There are additional inputs you can learn about in the
+<a href="https//:www.neonscience.org/neonDataStackR" target="_blank"><strong>Use the neonUtilities R Package to Access NEON Data</strong> tutorial</a>.</p>
+<p>The <code>dpID</code> is the data product identifier of the data you want to
+download. The DPID can be found on the
+<a href="http://data.neonscience.org/data-products/explore" target="_blank">
+Explore Data Products page</a>.</p>
+<p>It will be in the form DP#.#####.###. For this tutorial, we’ll use NEON’s most
+commonly downloaded AIS data products, Water quality.</p>
+<ul>
+<li>DP1.20288.001: Water quality</li>
+</ul>
+<p>Now it’s time to consider the NEON field site of interest. If not specified,
+the default will download a data product from all sites. The following are
+4-letter site codes for NEON’s 34 aquatics sites as of 2020:</p>
+<ul>
+<li>ARIK = Arikaree River CO</li>
+<li>BARC = Barco Lake FL</li>
+<li>BIGC = Upper Big Creek CA</li>
+<li>BLDE = Black Deer Creek WY</li>
+<li>BLUE = Blue River OK</li>
+<li>BLWA = Black Warrior River AL</li>
+<li>CARI = Caribou Creek AK</li>
+<li>COMO = Como Creek CO</li>
+<li>CRAM = Crampton Lake WI</li>
+<li>CUPE = Rio Cupeyes PR</li>
+<li>FLNT = Flint River GA</li>
+<li>GUIL = Rio Yahuecas PR</li>
+<li>HOPB = Lower Hop Brook MA</li>
+<li>KING = Kings Creek KS</li>
+<li>LECO = LeConte Creek TN</li>
+<li>LEWI = Lewis Run VA</li>
+<li>LIRO = Little Rock Lake WI</li>
+<li>MART = Martha Creek WA</li>
+<li>MAYF = Mayfield Creek AL</li>
+<li>MCDI = McDiffett Creek KS</li>
+<li>MCRA = McRae Creek OR</li>
+<li>OKSR = Oksrukuyik Creek AK</li>
+<li>POSE = Posey Creek VA</li>
+<li>PRIN = Pringle Creek TX</li>
+<li>PRLA = Prairie Lake ND</li>
+<li>PRPO = Prairie Pothole ND</li>
+<li>REDB = Red Butte Creek UT</li>
+<li>SUGG = Suggs Lake FL</li>
+<li>SYCA = Sycamore Creek AZ</li>
+<li>TECR = Teakettle Creek CA</li>
+<li>TOMB = Lower Tombigbee River AL</li>
+<li>TOOK = Toolik Lake AK</li>
+<li>WALK = Walker Branch TN</li>
+<li>WLOU = West St Louis Creek CO</li>
+</ul>
+<p>In this exercise, we will use data from only one NEON field site, Pringle
+Creek, TX from February 2020.  Because we want to examine individual quality
+flags we will download the expanded package.  We want the most current release.
+Finally, since we are only downloading one site-month of data we do not need to
+check the file size, but for larger downloads this is advisable.</p>
+<pre><code># download data of interest - Water Quality
+
+waq &lt;- loadByProduct(dpID=&quot;DP1.20288.001&quot;, 
+                     site=&quot;PRIN&quot;, 
+                     startdate=&quot;2020-02&quot;, 
+                     enddate=&quot;2020-02&quot;, 
+                     package=&quot;expanded&quot;, 
+                     release=&quot;current&quot;, 
+                     check.size = F,
+                     token=token)
+</code></pre>
+<h2 id="sec:files-associated-with-downloads">Files Associated with Downloads</h2>
+<p>The data we’ve downloaded comes as a list of objects.</p>
+<pre><code># view all components of the list
+
+names(waq)
+
+##  [1] &quot;ais_maintenance&quot;             &quot;ais_multisondeCleanCal&quot;      &quot;categoricalCodes_20288&quot;      &quot;citation_20288_RELEASE-2026&quot;
+##  [5] &quot;issueLog_20288&quot;              &quot;readme_20288&quot;                &quot;science_review_flags_20288&quot;  &quot;sensor_positions_20288&quot;     
+##  [9] &quot;variables_20288&quot;             &quot;waq_instantaneous&quot;
+</code></pre>
+<p>We can see that there are multiple objects in the downloaded water quality data.
+One dataframe of data (<code>waq_instantaneous</code>) and multiple metadata files.</p>
+<p>If you’d like you can use the <code>$</code> operator to assign an object from an item in
+the list. If you prefer to extract each table from the list and work with it as
+independent objects, which we will do, you can use the <code>list2env()</code> function.</p>
+<pre><code># unlist the variables and add to the global environment
+
+list2env(waq, .GlobalEnv)
+</code></pre>
+<p>So what exactly are these files and why would you want to use them?</p>
+<ul>
+<li><strong>data file(s)</strong>: There will always be one or more dataframes that include the
+primary data of the data product you downloaded. Multiple dataframes are
+available when there are related datatables for a single data product.  For
+example, some data products are averaged at multiple intervals (e.x. 5-min
+averages and 30-min averages).</li>
+<li><strong>sensor_postions_#####</strong>: this file contains information about the coordinates
+of each sensor, relative to a reference location.</li>
+<li><strong>variables_#####</strong>: this file contains all the variables found in the
+associated data table(s). This includes full definitions, units, and other
+important information.</li>
+<li><strong>readme_#####</strong>: The readme file, with the corresponding 5 digits from the
+data product number, provides you with important information relevant to the
+data product.</li>
+<li><strong>maintenance record(s)</strong>: Some data products come with maintenance records with
+information related to cleaning and calibration of sensors.</li>
+</ul>
+<p>Let’s take a look at a couple of these.</p>
+<pre><code># which sensor locations exist in the water quality dataset we just downloaded?
+
+View(waq_instantaneous)
+
+View(sensor_positions_20288)
+
+View(variables_20288)
+</code></pre>
+<h2 id="sec:data-versioning-and-citation">Data versioning and citation</h2>
+<p>Let’s check what release(s) our data is from (remember we used “current”). Each
+static data release has a unique DOI that should be cited.  If any provisional
+data is included it should also be cited (including download date), and archived
+because provisional data is non-static.</p>
+<pre><code># which release is the data from?
+
+unique(waq_instantaneous$release)
+
+## [1] &quot;RELEASE-2026&quot;
+</code></pre>
+<p>Learn more about data versioning and appropriately reuse of NEON data on the <a href="https://www.neonscience.org/data-samples/guidelines-policies" target="_blank"><strong>NEON Data Guidelines and Policy</strong></a> page.</p>
+<h2 id="sec:data-from-different-sensor-locations">Data from Different Sensor Locations</h2>
+<p>NEON often collects the same type of data from sensors in different locations.
+These data are delivered together but you will frequently want to plot the data
+separately or only include data from one sensor in your analysis. NEON uses the
+<code>horizontalPosition</code> variable in the data tables to describe which sensor
+data is collected from. The <code>horizontalPosition</code> (HOR) is always a three digit
+number. Non-shoreline HOR examples as of 2024 at AIS sites include:</p>
+<ul>
+<li>101: stream sensors located at the <strong>upstream</strong> station on a <strong>monopod mount</strong>,</li>
+<li>111: stream sensors located at the <strong>upstream</strong> station on an <strong>overhead cable mount</strong>,</li>
+<li>131: stream sensors located at the <strong>upstream</strong> station on a <strong>stand alone pressure transducer mount</strong>,</li>
+<li>102: stream sensors located at the <strong>downstream</strong> station on a monopod mount,</li>
+<li>112: stream sensors located at the <strong>downstream</strong> station on an <strong>overhead cable mount</strong></li>
+<li>132: stream sensors located at the <strong>downstream</strong> station on a <strong>stand alone pressure transducer mount</strong>,</li>
+<li>110: stream <strong>pressure transducers</strong> mounted directly to a <strong>staff gauge</strong>.</li>
+<li>103: sensors mounted on <strong>buoys in lakes or rivers</strong></li>
+<li>130, 140, 150, 160, 180 and and 190: sensors mounted in the <strong>littoral zone</strong> of lakes</li>
+</ul>
+<p>Note that data is also collected at different vertical positions (VER) at lake
+and river sites.  This example is from a wadeable stream site with only a single
+VER.</p>
+<p>You’ll frequently want to know which sensor locations are represented in your
+data. We can do this by looking for the <code>unique()</code> position designations in
+<code>horizontalPostions</code>.</p>
+<pre><code># which sensor locations exist in the water quality dataset we just downloaded?
+
+unique(waq_instantaneous$horizontalPosition)
+
+## [1] &quot;101&quot; &quot;102&quot;
+</code></pre>
+<p>We can see that there are two water quality horizontal positions present in the
+data, upstream and downstream. As the HOR of sensors can change at sites over
+time, as well as the physical location corresponding to a particular HOR, it is
+a good idea to review the sensor_positions file when you’re adding in new sites
+or a new date range to your analyses.</p>
+<p>We can use this information to split water quality data into the two
+different sensor set locations: upstream and the downstream.</p>
+<pre><code># Split data into separate dataframes by upstream/downstream locations.
+
+waq_up &lt;- 
+  waq_instantaneous %&gt;%
+  filter(horizontalPosition==&quot;101&quot;)
+
+
+
+waq_down &lt;- 
+  waq_instantaneous %&gt;%
+  filter(horizontalPosition==&quot;102&quot;)
+</code></pre>
+<h2 id="sec:plot-data">Plot Data</h2>
+<p>Now that we have our data separated into the upstream and downstream data, let’s
+plot Dissolved Oxygen from the downstream sensor.  NEON also includes
+uncertainty estimates for most of its measurements. Let’s include those in the
+plot as well.</p>
+<p>First, let’s identify the column names important for plotting - time and
+dissolved oxygen data:</p>
+<pre><code># One option is to view column names in the data frame
+
+colnames(waq_instantaneous)
+
+##   [1] &quot;domainID&quot;                      &quot;siteID&quot;                        &quot;horizontalPosition&quot;           
+##   [4] &quot;verticalPosition&quot;              &quot;startDateTime&quot;                 &quot;endDateTime&quot;                  
+##   [7] &quot;sensorDepth&quot;                   &quot;sensorDepthExpUncert&quot;          &quot;sensorDepthRangeQF&quot;           
+##  [10] &quot;sensorDepthNullQF&quot;             &quot;sensorDepthGapQF&quot;              &quot;sensorDepthValidCalQF&quot;        
+##  [13] &quot;sensorDepthSuspectCalQF&quot;       &quot;sensorDepthPersistQF&quot;          &quot;sensorDepthAlphaQF&quot;           
+##  [16] &quot;sensorDepthBetaQF&quot;             &quot;sensorDepthFinalQF&quot;            &quot;sensorDepthFinalQFSciRvw&quot;     
+##  [19] &quot;specificConductance&quot;           &quot;specificConductanceExpUncert&quot;  &quot;specificConductanceRangeQF&quot;   
+##  [22] &quot;specificConductanceStepQF&quot;     &quot;specificConductanceNullQF&quot;     &quot;specificConductanceGapQF&quot;     
+##  [25] &quot;specificConductanceSpikeQF&quot;    &quot;specificConductanceValidCalQF&quot; &quot;specificCondSuspectCalQF&quot;     
+##  [28] &quot;specificConductancePersistQF&quot;  &quot;specificConductanceAlphaQF&quot;    &quot;specificConductanceBetaQF&quot;    
+##  [31] &quot;specificCondFinalQF&quot;           &quot;specificCondFinalQFSciRvw&quot;     &quot;dissolvedOxygen&quot;              
+##  [34] &quot;dissolvedOxygenExpUncert&quot;      &quot;dissolvedOxygenRangeQF&quot;        &quot;dissolvedOxygenStepQF&quot;        
+##  [37] &quot;dissolvedOxygenNullQF&quot;         &quot;dissolvedOxygenGapQF&quot;          &quot;dissolvedOxygenSpikeQF&quot;       
+##  [40] &quot;dissolvedOxygenValidCalQF&quot;     &quot;dissolvedOxygenSuspectCalQF&quot;   &quot;dissolvedOxygenPersistenceQF&quot; 
+##  [43] &quot;dissolvedOxygenAlphaQF&quot;        &quot;dissolvedOxygenBetaQF&quot;         &quot;dissolvedOxygenFinalQF&quot;       
+##  [46] &quot;dissolvedOxygenFinalQFSciRvw&quot;  &quot;seaLevelDissolvedOxygenSat&quot;    &quot;seaLevelDOSatExpUncert&quot;       
+##  [49] &quot;seaLevelDOSatRangeQF&quot;          &quot;seaLevelDOSatStepQF&quot;           &quot;seaLevelDOSatNullQF&quot;          
+##  [52] &quot;seaLevelDOSatGapQF&quot;            &quot;seaLevelDOSatSpikeQF&quot;          &quot;seaLevelDOSatValidCalQF&quot;      
+##  [55] &quot;seaLevelDOSatSuspectCalQF&quot;     &quot;seaLevelDOSatPersistQF&quot;        &quot;seaLevelDOSatAlphaQF&quot;         
+##  [58] &quot;seaLevelDOSatBetaQF&quot;           &quot;seaLevelDOSatFinalQF&quot;          &quot;seaLevelDOSatFinalQFSciRvw&quot;   
+##  [61] &quot;localDissolvedOxygenSat&quot;       &quot;localDOSatExpUncert&quot;           &quot;localDOSatRangeQF&quot;            
+##  [64] &quot;localDOSatStepQF&quot;              &quot;localDOSatNullQF&quot;              &quot;localDOSatGapQF&quot;              
+##  [67] &quot;localDOSatSpikeQF&quot;             &quot;localDOSatValidCalQF&quot;          &quot;localDOSatSuspectCalQF&quot;       
+##  [70] &quot;localDOSatPersistQF&quot;           &quot;localDOSatAlphaQF&quot;             &quot;localDOSatBetaQF&quot;             
+##  [73] &quot;localDOSatFinalQF&quot;             &quot;localDOSatFinalQFSciRvw&quot;       &quot;pH&quot;                           
+##  [76] &quot;pHExpUncert&quot;                   &quot;pHRangeQF&quot;                     &quot;pHStepQF&quot;                     
+##  [79] &quot;pHNullQF&quot;                      &quot;pHGapQF&quot;                       &quot;pHSpikeQF&quot;                    
+##  [82] &quot;pHValidCalQF&quot;                  &quot;pHSuspectCalQF&quot;                &quot;pHPersistenceQF&quot;              
+##  [85] &quot;pHAlphaQF&quot;                     &quot;pHBetaQF&quot;                      &quot;pHFinalQF&quot;                    
+##  [88] &quot;pHFinalQFSciRvw&quot;               &quot;chlorophyll&quot;                   &quot;chlorophyllExpUncert&quot;         
+##  [91] &quot;chlorophyllRangeQF&quot;            &quot;chlorophyllStepQF&quot;             &quot;chlorophyllNullQF&quot;            
+##  [94] &quot;chlorophyllGapQF&quot;              &quot;chlorophyllSpikeQF&quot;            &quot;chlorophyllValidCalQF&quot;        
+##  [97] &quot;chlorophyllSuspectCalQF&quot;       &quot;chlorophyllPersistenceQF&quot;      &quot;chlorophyllAlphaQF&quot;           
+## [100] &quot;chlorophyllBetaQF&quot;             &quot;chlorophyllFinalQF&quot;            &quot;chlorophyllFinalQFSciRvw&quot;     
+## [103] &quot;chlaRelativeFluorescence&quot;      &quot;chlaRelFluoroExpUncert&quot;        &quot;chlaRelFluoroRangeQF&quot;         
+## [106] &quot;chlaRelFluoroStepQF&quot;           &quot;chlaRelFluoroNullQF&quot;           &quot;chlaRelFluoroGapQF&quot;           
+## [109] &quot;chlaRelFluoroSpikeQF&quot;          &quot;chlaRelFluoroValidCalQF&quot;       &quot;chlaRelFluoroSuspectCalQF&quot;    
+## [112] &quot;chlaRelFluoroPersistenceQF&quot;    &quot;chlaRelFluoroAlphaQF&quot;          &quot;chlaRelFluoroBetaQF&quot;          
+## [115] &quot;chlaRelFluoroFinalQF&quot;          &quot;chlaRelFluoroFinalQFSciRvw&quot;    &quot;turbidity&quot;                    
+## [118] &quot;turbidityExpUncert&quot;            &quot;turbidityRangeQF&quot;              &quot;turbidityStepQF&quot;              
+## [121] &quot;turbidityNullQF&quot;               &quot;turbidityGapQF&quot;                &quot;turbiditySpikeQF&quot;             
+## [124] &quot;turbidityValidCalQF&quot;           &quot;turbiditySuspectCalQF&quot;         &quot;turbidityPersistenceQF&quot;       
+## [127] &quot;turbidityAlphaQF&quot;              &quot;turbidityBetaQF&quot;               &quot;turbidityFinalQF&quot;             
+## [130] &quot;turbidityFinalQFSciRvw&quot;        &quot;fDOM&quot;                          &quot;rawCalibratedfDOM&quot;            
+## [133] &quot;fDOMExpUncert&quot;                 &quot;fDOMRangeQF&quot;                   &quot;fDOMStepQF&quot;                   
+## [136] &quot;fDOMNullQF&quot;                    &quot;fDOMGapQF&quot;                     &quot;fDOMSpikeQF&quot;                  
+## [139] &quot;fDOMValidCalQF&quot;                &quot;fDOMSuspectCalQF&quot;              &quot;fDOMPersistenceQF&quot;            
+## [142] &quot;fDOMAlphaQF&quot;                   &quot;fDOMBetaQF&quot;                    &quot;fDOMTempQF&quot;                   
+## [145] &quot;fDOMAbsQF&quot;                     &quot;fDOMFinalQF&quot;                   &quot;fDOMFinalQFSciRvw&quot;            
+## [148] &quot;buoyNAFlag&quot;                    &quot;spectrumCount&quot;                 &quot;publicationDate&quot;              
+## [151] &quot;release&quot;
+
+
+# Alternatively, view the variables object corresponding to the data product for more information
+
+View(variables_20288)
+</code></pre>
+<p>Quite a few columns in the water quality data product!</p>
+<p>The time column we’ll consider for instrumented systems is <code>endDateTime</code>.
+Timestamp column choice (e.g. start or end) matters for time-aggregated
+datasets, but should not matter for instantaneous data such as water quality.
+When interpreting data, keep in mind NEON timestamps are always in UTC.</p>
+<p>The data columns we would like to plot are <code>dissolvedOxygen</code> and
+<code>dissolvedOxygenExpUncert</code>.</p>
+<pre><code>doPlot &lt;- ggplot() +
+	geom_line(data = waq_down,aes(endDateTime, 
+	                              dissolvedOxygen),
+	          na.rm=TRUE, color=&quot;blue&quot;) +
+  geom_ribbon(data=waq_down,aes(x=endDateTime, 
+                  ymin = (dissolvedOxygen - dissolvedOxygenExpUncert), 
+                  ymax = (dissolvedOxygen + dissolvedOxygenExpUncert)), 
+              alpha = 0.4, fill = &quot;grey25&quot;) +
+	ylim(8, 15) + ylab(&quot;DO (mg/L)&quot;) + xlab(&quot;Date&quot;) + 
+  ggtitle(&quot;PRIN Downstream DO with Uncertainty Bounds&quot;) 
+
+
+
+doPlot
+</code></pre>
+<p><img src="https://raw.githubusercontent.com/NEONScience/NEON-Data-Skills/main/tutorials/R/Aquatics/AIS-quality-flags/download-AIS-data/rfigs/plot-waq-do-1.png" alt=" " /></p>
+<h2 id="sec:examine-quality-flagged-data">Examine Quality Flagged Data</h2>
+<p>Data product quality flags fall under two distinct types:</p>
+<ul>
+<li>Automated quality flags, e.g. range, spike, step, null</li>
+<li>Manual science review quality flag</li>
+</ul>
+<p>In instantaneous data such as water quality, the quality flag columns are
+denoted with “QF”. In time-averaged data, most quality flags have been
+aggregated into quality metrics, with column names denoted with “QM”
+representing the fraction of flagged points within the time averaging window.</p>
+<pre><code>waq_qf_names &lt;- names(waq_down)[grep(&quot;QF&quot;, names(waq_down))]
+
+
+
+print(paste0(&quot;Total columns in DP1.20288.001 expanded package = &quot;, 
+             as.character(length(waq_qf_names))))
+
+## [1] &quot;Total columns in DP1.20288.001 expanded package = 120&quot;
+
+# Let's just look at those corresponding to dissolvedOxygen.
+
+# We need to remove those associated with dissolvedOxygenSaturation.
+
+do_qf_names &lt;- waq_qf_names[grep(&quot;dissolvedOxygen&quot;,
+                                 waq_qf_names)]
+
+do_qf_names &lt;- do_qf_names[grep(&quot;dissolvedOxygenSat&quot;,
+                                do_qf_names,invert=T)]
+
+
+
+print(&quot;dissolvedOxygen columns in DP1.20288.001 expanded package:&quot;)
+
+## [1] &quot;dissolvedOxygen columns in DP1.20288.001 expanded package:&quot;
+
+print(do_qf_names)
+
+##  [1] &quot;dissolvedOxygenRangeQF&quot;       &quot;dissolvedOxygenStepQF&quot;        &quot;dissolvedOxygenNullQF&quot;       
+##  [4] &quot;dissolvedOxygenGapQF&quot;         &quot;dissolvedOxygenSpikeQF&quot;       &quot;dissolvedOxygenValidCalQF&quot;   
+##  [7] &quot;dissolvedOxygenSuspectCalQF&quot;  &quot;dissolvedOxygenPersistenceQF&quot; &quot;dissolvedOxygenAlphaQF&quot;      
+## [10] &quot;dissolvedOxygenBetaQF&quot;        &quot;dissolvedOxygenFinalQF&quot;       &quot;dissolvedOxygenFinalQFSciRvw&quot;
+</code></pre>
+<p>A quality flag (QF) of 0 indicates a pass, 1 indicates a fail, and -1 indicates
+a test that could not be performed. For example, a range test cannot be
+performed on missing measurements.</p>
+<p>Detailed quality flags test results are all available in the
+<code>package = 'expanded'</code> setting we specified when calling
+<code>neonUtilities::loadByProduct()</code>. If we had specified <code>package = 'basic'</code>,
+we wouldn’t be able to investigate the detail in the type of data flag thrown.
+We would only see the FinalQF columns.</p>
+<p>The <code>AlphaQF</code> and <code>BetaQF</code> represent aggregated results of various QF tests,
+and vary by a data  product’s algorithm. In most cases, an observation’s
+<code>AlphaQF = 1</code> indicates whether or not at least one QF was set to a value
+of 1, and an observation’s <code>BetaQF = 1</code> indicates whether or not at least one
+QF was set to value of -1.</p>
+<p>Let’s consider what types of quality flags were thrown.</p>
+<pre><code>for(col_nam in do_qf_names){
+  print(paste0(col_nam, &quot; unique values: &quot;, 
+               paste0(unique(waq_down[,col_nam]), 
+                      collapse = &quot;, &quot;)))
+}
+
+## [1] &quot;dissolvedOxygenRangeQF unique values: 0, -1&quot;
+## [1] &quot;dissolvedOxygenStepQF unique values: 0, -1, 1&quot;
+## [1] &quot;dissolvedOxygenNullQF unique values: 0, 1&quot;
+## [1] &quot;dissolvedOxygenGapQF unique values: 0, 1&quot;
+## [1] &quot;dissolvedOxygenSpikeQF unique values: 0, -1&quot;
+## [1] &quot;dissolvedOxygenValidCalQF unique values: 0&quot;
+## [1] &quot;dissolvedOxygenSuspectCalQF unique values: 0&quot;
+## [1] &quot;dissolvedOxygenPersistenceQF unique values: 0&quot;
+## [1] &quot;dissolvedOxygenAlphaQF unique values: 0, 1&quot;
+## [1] &quot;dissolvedOxygenBetaQF unique values: 0, 1&quot;
+## [1] &quot;dissolvedOxygenFinalQF unique values: 0, 1&quot;
+## [1] &quot;dissolvedOxygenFinalQFSciRvw unique values: NA&quot;
+</code></pre>
+<p>QF values generally mean the following:</p>
+<ul>
+<li>0: Quality test passed</li>
+<li>1: Quality test failed</li>
+<li>-1: Quality test could not be run</li>
+</ul>
+<p>Now let’s consider the total number of flags generated for each quality test:</p>
+<pre><code># Loop across the QF column names. 
+
+#  Within each column, count the number of rows that equal '1'.
+
+print(&quot;FLAG TEST - COUNT&quot;)
+
+## [1] &quot;FLAG TEST - COUNT&quot;
+
+for (col_nam in do_qf_names){
+  totl_qf_in_col &lt;- length(which(waq_down[,col_nam] == 1))
+  print(paste0(col_nam,&quot;: &quot;,totl_qf_in_col))
+}
+
+## [1] &quot;dissolvedOxygenRangeQF: 0&quot;
+## [1] &quot;dissolvedOxygenStepQF: 23&quot;
+## [1] &quot;dissolvedOxygenNullQF: 224&quot;
+## [1] &quot;dissolvedOxygenGapQF: 211&quot;
+## [1] &quot;dissolvedOxygenSpikeQF: 0&quot;
+## [1] &quot;dissolvedOxygenValidCalQF: 0&quot;
+## [1] &quot;dissolvedOxygenSuspectCalQF: 0&quot;
+## [1] &quot;dissolvedOxygenPersistenceQF: 0&quot;
+## [1] &quot;dissolvedOxygenAlphaQF: 247&quot;
+## [1] &quot;dissolvedOxygenBetaQF: 229&quot;
+## [1] &quot;dissolvedOxygenFinalQF: 247&quot;
+## [1] &quot;dissolvedOxygenFinalQFSciRvw: 0&quot;
+
+print(paste0(&quot;Total DO observations: &quot;, nrow(waq_down) ))
+
+## [1] &quot;Total DO observations: 41760&quot;
+</code></pre>
+<p>Above lists the total DO QFs, as well as the total number of observation data
+points in the data file.</p>
+<p>For specific details on the algorithms used to create a data product and its
+corresponding quality tests, it’s best to first check the data product’s
+Algorithm Theoretical Basis Document (ATBD) available for download on the
+data product’s web page.</p>
+<p>Are there any manual science review quality flags? If so, the explanation for
+flagging may also be viewed science_review_flags file that comes with the
+download.</p>
+<p>Note that the automated quality flag algorithms are not perfect, and suspect
+data points may occasionally pass the quality tests.  Other times potentially
+useful data may get quality flagged.  Ultimately it is up to the user to decide
+which data they are comfortable using, which is why we recommend using the
+expanded data package to better understand why data are being flagged.</p>
+<h2 id="sec:replot-with-quality-flags-filtered-by-color">Replot, with quality flags filtered by color</h2>
+<p>Let’s replot the data with any quality flagged measurements set to a different
+color.</p>
+<pre><code># plot
+
+doPlot &lt;- ggplot() +
+	geom_line(data = waq_down, aes(x=endDateTime, 
+	                               y=dissolvedOxygen,
+	                 color=factor(dissolvedOxygenFinalQF)), 
+	          na.rm=TRUE) +
+  scale_color_manual(values = c(&quot;0&quot; = &quot;blue&quot;,&quot;1&quot;=&quot;red&quot;)) +
+  ylim(8, 15) + ylab(&quot;DO (mg/L)&quot;) + xlab(&quot;Date&quot;) + 
+  ggtitle(&quot;PRIN Downstream DO filtered by FinalQF&quot;) 
+
+  
+
+doPlot
+</code></pre>
+<p><img src="https://raw.githubusercontent.com/NEONScience/NEON-Data-Skills/main/tutorials/R/Aquatics/AIS-quality-flags/download-AIS-data/rfigs/plot-waq-do-flags-1.png" alt=" " /></p>
+<h2 id="sec:apply-what-we-ve-learned-part-1-temperature-of-surface-water">Apply what we’ve learned Part 1 - Temperature of Surface Water</h2>
+<p>Applying what we’ve learned, let’s look at a different data product,Temperature
+of Surface Water (DP1.20053.001).  Can you download for the same site and month
+that we just looked at for water quality?</p>
+<pre><code># download continuous discharge data
+
+csd &lt;- loadByProduct(dpID=&quot;DP1.20053.001&quot;, 
+                     site=&quot;PRIN&quot;, 
+                     startdate=&quot;2020-02&quot;, 
+                     enddate=&quot;2020-02&quot;, 
+                     package=&quot;expanded&quot;, 
+                     release=&quot;current&quot;, 
+                     check.size = F,
+                     token=token)
+
+list2env(csd,.GlobalEnv)
+</code></pre>
+<p>This data product also comes with sensor_position_#####, variables_#####,
+readme_#####, and other metadata files.  But did you notice anything different
+about the data file(s)?  Temperature of surface water is an averaged data
+product and comes with both a 5min and 30min data file.  Let’s use the 30min.</p>
+<p>What horizontal positions are present in the data?</p>
+<pre><code># which sensor locations exist in the temperature of surface water dataset?
+
+unique(TSW_30min$horizontalPosition)
+
+## [1] &quot;101&quot; &quot;102&quot;
+</code></pre>
+<p>Let’s use the downstream data just like we did for water quality.</p>
+<pre><code># Split data into separate dataframe for downstream location.
+
+tsw_down &lt;- 
+  TSW_30min %&gt;% 
+  filter(horizontalPosition==&quot;102&quot;)
+</code></pre>
+<p>Can you remove the quality flagged values?</p>
+<pre><code># remove values with a final quality flag
+
+tsw_down &lt;- tsw_down %&gt;%
+  filter(finalQF==0)
+</code></pre>
+<p>Can you plot the data?</p>
+<pre><code># plot
+
+csdPlot &lt;- ggplot() +
+	geom_line(data = tsw_down,aes(endDateTime, 
+	                              surfWaterTempMean),
+	          na.rm=TRUE, color=&quot;blue&quot;) +
+  geom_ribbon(data=tsw_down,aes(x=endDateTime, 
+                  ymin = (surfWaterTempMean-surfWaterTempExpUncert), 
+                  ymax = (surfWaterTempMean+surfWaterTempExpUncert)), 
+              alpha = 0.4, fill = &quot;grey25&quot;) +
+	ylim(2, 16) + ylab(&quot;Temp (C)&quot;) + xlab(&quot;Date&quot;) + 
+  ggtitle(&quot;PRIN Downstream Temp with Uncertainty Bounds&quot;) 
+
+
+
+csdPlot
+</code></pre>
+<p><img src="https://raw.githubusercontent.com/NEONScience/NEON-Data-Skills/main/tutorials/R/Aquatics/AIS-quality-flags/download-AIS-data/rfigs/plot-tsw-1.png" alt=" " /></p>
+<h2 id="sec:apply-what-we-ve-learned-part-2-continuous-discharge">Apply what we’ve learned Part 2 - Continuous discharge</h2>
+<p>Applying what we’ve learned, let’s look at a different data product,
+Continuous discharge (DP4.00130.001).  Can you download for the same site and
+month that we just looked at for water quality?</p>
+<pre><code># download continuous discharge data
+
+csd &lt;- loadByProduct(dpID=&quot;DP4.00130.001&quot;, 
+                     site=&quot;PRIN&quot;, 
+                     startdate=&quot;2020-02&quot;, 
+                     enddate=&quot;2020-02&quot;, 
+                     package=&quot;expanded&quot;, 
+                     release=&quot;current&quot;, 
+                     check.size = F,
+                     token=token)
+
+list2env(csd,.GlobalEnv)
+</code></pre>
+<p>Discharge is only measured a a single location in stream sites, so we don’t
+have to worry about horizontal position. Can you remove the quality flagged
+values?</p>
+<pre><code># remove values with a final quality flag
+
+csd_continuousDischarge &lt;- 
+  csd_continuousDischarge %&gt;%
+  filter(dischargeFinalQF==0)
+</code></pre>
+<p>Can you plot the discharge data?</p>
+<pre><code>csdPlot &lt;- ggplot() +
+	geom_line(data = csd_continuousDischarge,
+	          aes(endDate, 
+	              maxpostDischarge),
+	          na.rm=TRUE, color=&quot;blue&quot;) +
+  geom_ribbon(data=csd_continuousDischarge,
+              aes(x=endDate, 
+                  ymin = (withRemnUncQLower1Std), 
+                  ymax = (withRemnUncQUpper1Std)), 
+              alpha = 0.4, fill = &quot;grey25&quot;) +
+	ylim(0, 4000) + ylab(&quot;Q (L/s)&quot;) + xlab(&quot;Date&quot;) + 
+  ggtitle(&quot;PRIN Discharge with Uncertainty Bounds&quot;) 
+
+
+
+csdPlot
+</code></pre>
+<p><img src="https://raw.githubusercontent.com/NEONScience/NEON-Data-Skills/main/tutorials/R/Aquatics/AIS-quality-flags/download-AIS-data/rfigs/plot-q-1.png" alt=" " /></p>
+<p>Note: The developers of the Bayesian discharge model used by NEON recommend the
+maxpostDischarge, which is the mode of the posterior distribution (means and
+medians are also provided).</p>
+</div>
+</body>
+</html>

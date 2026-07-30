@@ -8,23 +8,29 @@
 rm(list=ls())
 require(knitr)
 require(markdown)
+options(timeout=300)
 
 # Choose the directory under 'tutorials' to knit
 # You can choose a high-level directory and this script will search
 # that directory recursively, knitting every .Rmd within it.
 # Note: do not put '/' at the end of your directory name
 dirs <- c("R/NEON-general/neon-overview/NEON-download-explore",
+          "R/NEON-general/neon-code-packages/tokens-simple",
           "R/biodiversity/biorepository",
-          "R/NEON-general/MDP",
-          "R/soils/soil-microbe-biomass",
+          "R/biodiversity/fish",
+          "R/biodiversity/beetle-forecasting",
+          "R/Aquatics/AIS-AOS-integration",
+          "R/NEON-general/neon-overview/site-management",
+          "R/eddy-covariance/intro-to-eddy4R/eddy_intro",
           "R/AOP/Lidar/lidar-topography/veg_structure_and_chm",
-          "/Other/Concept-intros/test_tabs_figures")
+          "R/AIS-data/L4-Discharge-Series/continuous-discharge-basic",
+          "R/AIS-data/NEON-hydrology-tutorial")
 
 #################### Set up Input Variables #############################
 
 # set directory (order above) that you'd like to build
 
-subDir <- dirs[3]
+subDir <- dirs[5]
 
 # Inputs - Where the git repo is on your computer
 gitRepoPath <-"~/GitHub/NEON-Data-Skills"
